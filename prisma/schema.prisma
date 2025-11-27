@@ -1,0 +1,143 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  systemPrompt  String   @db.Text
+  llmProvider   String   // "openai" | "google"
+  llmModel      String   // "gpt-4", "gemini-1.5-pro", etc.
+  apiKeyEncrypted String @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  knowledgeBases KnowledgeBase[]
+  agentActions   AgentAction[]
+  
+  @@map("agents")
+}
+
+model Integration {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  description     String?
+  method          String   // "GET" | "POST" | "PUT" | "DELETE"
+  url             String
+  authEnabled     Boolean  @default(false)
+  authConfig      Json?    // Array of auth entries
+  defaultHeaders  Json?    // Key-value object
+  defaultParams   Json?    // Key-value object
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  actions Action[]
+  
+  @@map("integrations")
+}
+
+model Action {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  descriptionForLlm String   @db.Text
+  integrationId     String
+  executionMode     String   // "ON_CALL" | "POST_CALL"
+  variables         Json     // Array of variable definitions
+  bodyTemplate      String?  @db.Text
+  urlTemplate       String?  // For path params
+  queryTemplate     Json?    // For query params
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  integration   Integration   @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  testCases     TestCase[]
+  agentActions  AgentAction[]
+  
+  @@map("actions")
+}
+
+model AgentAction {
+  id        String   @id @default(uuid())
+  agentId   String
+  actionId  String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  
+  agent  Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  action Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  
+  @@unique([agentId, actionId])
+  @@map("agent_actions")
+}
+
+model KnowledgeBase {
+  id              String   @id @default(uuid())
+  agentId         String
+  fileName        String
+  fileType        String   // "pdf" | "docx" | "txt" | "csv" | "json"
+  filePath        String
+  fileSize        Int
+  status          String   @default("uploaded") // "uploaded" | "processing" | "indexed" | "failed"
+  embeddingProvider String? // "openai" | "google"
+  embeddingModel    String?
+  chunkCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  agent        Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  vectorChunks VectorChunk[]
+  
+  @@map("knowledge_bases")
+}
+
+model VectorChunk {
+  id              String   @id @default(uuid())
+  knowledgeBaseId String
+  chunkIndex      Int
+  text            String   @db.Text
+  vectorId        String   // ID in vector DB (e.g., Pinecone)
+  embedding       Json?    // Vector embedding as array of floats
+  metadata        Json?    // Page number, section, etc.
+  createdAt       DateTime @default(now())
+  
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  
+  @@unique([knowledgeBaseId, chunkIndex])
+  @@index([knowledgeBaseId])
+  @@map("vector_chunks")
+}
+
+model Secret {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  encryptedValue  String   @db.Text
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("secrets")
+}
+
+model TestCase {
+  id           String   @id @default(uuid())
+  actionId     String
+  name         String
+  inputs       Json     // Variable values
+  lastResponse Json?    // Last test response
+  lastStatus   Int?     // HTTP status code
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  action Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  
+  @@map("test_cases")
+}

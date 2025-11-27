@@ -1,0 +1,23 @@
+Company Information
+
+Company Name: TechCorp Solutions
+Founded: 2020
+CEO: Sarah Johnson
+Headquarters: San Francisco, California
+
+Products:
+- CloudSync Pro: Cloud storage solution with 99.9% uptime
+- DataVault: Enterprise data encryption service
+- AI Assistant Pro: Custom AI chatbot platform
+
+Employee Count: 250 employees
+Revenue 2023: $50 million
+Main Clients: Fortune 500 companies
+
+Contact:
+Email: info@techcorp.com
+Phone: +1-555-0123
+Website: www.techcorp.com
+
+Mission Statement:
+We provide cutting-edge technology solutions that empower businesses to thrive in the digital age.
