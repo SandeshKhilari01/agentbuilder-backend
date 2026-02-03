@@ -39,4 +39,4 @@ uploads/
 .env
 
 # Prisma
-prisma/migrations/
+# prisma/migrations/

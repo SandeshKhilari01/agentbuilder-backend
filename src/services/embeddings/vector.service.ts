@@ -34,6 +34,12 @@ class VectorService {
     private initializePinecone() {
         this.client = new Pinecone({
             apiKey: process.env.PINECONE_API_KEY!,
+            // Fix: Add explicit environment if required by the SDK version, 
+            // though modern SDKs deduce it. If the build fails without it, we add it.
+            // Using a fallback to force string type if potentially undefined but required.
+            // However, based on the error, 'environment' is required in the type def.
+            // We'll use the environment variable.
+            environment: process.env.PINECONE_ENVIRONMENT || 'gcp-starter',
         });
     }
 
