@@ -5,9 +5,11 @@ const connectionString = process.env.DATABASE_URL || 'postgresql://sandeshsonaba
 
 console.log('🔌 Database connection string:', connectionString.replace(/:[^:@]+@/, ':****@')); // Mask password if any
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const pool = new Pool({
     connectionString,
-    ssl: false
+    ssl: isProduction ? { rejectUnauthorized: false } : false
 });
 
 // Test connection on startup
